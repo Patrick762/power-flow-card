@@ -26,7 +26,7 @@ import {
   round,
   isNumberValue,
 } from "./utils.js";
-import { EntityType } from "./type.js";
+import { ComboEntity, EntityType } from "./type.js";
 import { logError } from "./logging.js";
 
 const CIRCLE_CIRCUMFERENCE = 238.76104;
@@ -117,12 +117,24 @@ export class PowerFlowCard extends LitElement {
       : `${round(value, this._config!.w_decimals)} W`;
   };
 
+  private openDetails(entityId?: string | ComboEntity): void {
+    if(!entityId || !this._config.clickable_entities) return;
+
+    if(typeof entityId !== "string")
+    {
+      entityId = entityId.production ?? entityId.consumption;
+    }
+
+    let e = new CustomEvent('hass-more-info', { composed: true, detail: {entityId} });
+    this.dispatchEvent(e);
+  }
+
   protected render(): TemplateResult {
     if (!this._config || !this.hass) {
       return html``;
     }
 
-    const { entities } = this._config;
+    const { entities, clickable_entities } = this._config;
 
     const hasGrid = entities.grid !== undefined;
 
@@ -358,7 +370,10 @@ export class PowerFlowCard extends LitElement {
                           "ui.panel.lovelace.cards.energy.energy_distribution.solar"
                         )}</span
                       >
-                      <div class="circle">
+                      <div class="circle" @click=${e => {
+                        e.stopPropagation();
+                        this.openDetails(entities.solar);
+                      }}>
                         <ha-svg-icon .path=${mdiSolarPower}></ha-svg-icon>
                         <span class="solar">
                           ${this.displayValue(totalSolarProduction)}</span
@@ -375,7 +390,10 @@ export class PowerFlowCard extends LitElement {
                           "ui.panel.lovelace.cards.energy.energy_distribution.gas"
                         )}</span
                       >
-                      <div class="circle">
+                      <div class="circle" @click=${e => {
+                        e.stopPropagation();
+                        this.openDetails(entities.gas);
+                      }}>
                         <ha-svg-icon .path=${mdiFire}></ha-svg-icon>
                         ${formatNumber(gasUsage || 0, this.hass.locale, {
                           maximumFractionDigits: 1,
@@ -408,7 +426,10 @@ export class PowerFlowCard extends LitElement {
                           "ui.panel.lovelace.cards.energy.energy_distribution.water"
                         )}</span
                       >
-                      <div class="circle">
+                      <div class="circle" @click=${e => {
+                        e.stopPropagation();
+                        this.openDetails(entities.water);
+                      }}>
                         <ha-svg-icon .path=${mdiWater}></ha-svg-icon>
                         ${formatNumber(waterUsage || 0, this.hass.locale, {
                           maximumFractionDigits: 1,
@@ -440,7 +461,10 @@ export class PowerFlowCard extends LitElement {
           <div class="row">
             ${hasGrid
               ? html` <div class="circle-container grid">
-                  <div class="circle">
+                  <div class="circle" @click=${e => {
+                    e.stopPropagation();
+                    this.openDetails(entities.grid);
+                  }}>
                     <ha-svg-icon .path=${mdiTransmissionTower}></ha-svg-icon>
                     ${returnedToGrid !== null
                       ? html`<span class="return">
@@ -535,7 +559,10 @@ export class PowerFlowCard extends LitElement {
                 <div class="spacer"></div>
                 ${hasBattery
                   ? html` <div class="circle-container battery">
-                      <div class="circle">
+                      <div class="circle" @click=${e => {
+                        e.stopPropagation();
+                        this.openDetails(entities.battery_charge ?? entities.battery);
+                      }}>
                         ${batteryChargeState !== null
                           ? html` <span>
                               ${formatNumber(
@@ -591,7 +618,10 @@ export class PowerFlowCard extends LitElement {
                               </circle>`
                           : ""}
                       </svg>
-                      <div class="circle">
+                      <div class="circle" @click=${e => {
+                        e.stopPropagation();
+                        this.openDetails(entities.water);
+                      }}>
                         <ha-svg-icon .path=${mdiWater}></ha-svg-icon>
                         ${formatNumber(waterUsage || 0, this.hass.locale, {
                           maximumFractionDigits: 1,
@@ -916,6 +946,7 @@ export class PowerFlowCard extends LitElement {
       display: flex;
       flex-direction: column;
       align-items: center;
+      z-index: 1; 
     }
     .circle-container.solar {
       margin: 0 4px;
@@ -942,6 +973,7 @@ export class PowerFlowCard extends LitElement {
       width: 84px;
     }
     .circle {
+      cursor: pointer;
       width: 80px;
       height: 80px;
       border-radius: 50%;
@@ -1084,6 +1116,7 @@ export class PowerFlowCard extends LitElement {
       fill: var(--energy-grid-consumption-color);
     }
     .home .circle {
+      cursor: auto;
       border-width: 0;
       border-color: var(--primary-color);
     }
