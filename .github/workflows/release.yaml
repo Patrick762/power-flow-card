@@ -46,4 +46,5 @@ jobs:
           release_name: ${{ github.ref }}
           draft: false
           prerelease: false
-          artifacts: ./dist/power-flow-card.js
+          replacesArtifacts: true
+          artifacts: "./dist/power-flow-card.js"
