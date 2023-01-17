@@ -1,9 +1,7 @@
 name: HACS Validation
 
-on:
-  push:
-    branches:
-      - main
+on: workflow_dispatch
+
 jobs:
   hacs:
     runs-on: "ubuntu-latest"
