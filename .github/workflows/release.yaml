@@ -1,15 +1,14 @@
 name: Release
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "**"
 
 jobs:
   release-bundle:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
-
-    outputs:
-      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
-      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
 
     steps:
       - uses: actions/checkout@v3
@@ -25,11 +24,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-
 
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v2.2.1
         with:
@@ -43,7 +37,13 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Release
-        run: pnpx semantic-release
+      - name: Create Release
+        uses: actions/create-release@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+          artifacts: ./dist/power-flow-card.js
