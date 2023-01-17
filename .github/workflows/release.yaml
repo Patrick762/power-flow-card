@@ -3,8 +3,8 @@ name: Release
 on:
   workflow_dispatch:
   push:
-    tags:
-      - "**"
+    branches:
+      - main
 
 jobs:
   release-bundle:
@@ -37,14 +37,11 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Create Release
-        uses: actions/create-release@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: "marvinpinto/action-automatic-releases@latest"
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: false
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
           prerelease: false
-          replacesArtifacts: true
-          artifacts: "./dist/power-flow-card.js"
+          title: "Development Build"
+          files: |
+            ./dist/power-flow-card.js
